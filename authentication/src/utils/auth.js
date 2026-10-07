@@ -11,3 +11,13 @@ export const genrateToken = ({userId}) => {
     }
 }
 
+export const verifyAccessToken  = (token) => {
+    const decode = jwt.verify(token,config.ACCESS_JWT_SECRET)
+    return decode
+}
+
+export const verifyRefreshToken  = (token) => {
+    const decode = jwt.verify(token,config.REFRESH_JWT_SECRET)
+    return decode
+}
+
