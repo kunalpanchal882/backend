@@ -1,6 +1,6 @@
 import userModel from "../models/auth.model.js"
 import bcrypt from 'bcryptjs'
-import { genrateToken, verifyAccessToken } from "../utils/auth.js"
+import { genrateToken, verifyAccessToken, verifyRefreshToken } from "../utils/auth.js"
 import { model } from "mongoose"
 
 
@@ -32,7 +32,7 @@ export const registerController = async(req,res) => {
     user.refreshToken = refreshToken
     user.save()
 
-    res.cookie('refreshToekn',refreshToken,{
+    res.cookie('refreshToken',refreshToken,{
         httpOnly:true
     })
 
@@ -52,18 +52,18 @@ export const registerController = async(req,res) => {
 }
 
 export const meController = async(req,res) =>{
-    const accessToken = req.header.authorization?.split[" "]
-
+    const accessToken = req.headers.authorization?.split(" ")[1]
+ 
     if(!accessToken){
         return res.status(401).json({
-            messgae:"unauthorized user or token expire"
+            messgae:"unauthorized user or token"
         })
     }
 
     try {
         const decode = verifyAccessToken(accessToken)
 
-        const user = userModel.findById(decode._id)
+        const user = await userModel.findById(decode.id)
 
         res.status(200).json({
             message:"user fetch successfully",
@@ -80,5 +80,48 @@ export const meController = async(req,res) =>{
         })
     }
 
+
+}
+
+export const refreshController = async (req,res) => {
+    const refreshToken = req.cookies.refreshToken
+    
+    if(!refreshToken){
+        return res.status(401).json({
+            message:"Unauthorized user or invalid token"
+        })
+    }
+
+    try {
+        const decode = verifyRefreshToken(refreshToken)
+
+        const user = await userModel.findById(decode.id)
+
+        if(refreshToken !==  user.refreshToken){
+            user.refreshToken = null;
+            await user.save()
+
+            return res.status(401).json({
+                message:"Unauthorized user or invalid token"
+            })
+        }
+
+      const {accessToken,refreshToken:newRefreshToken} = genrateToken({userId:user._id})
+
+      res.cookie('refreshToken',newRefreshToken,{httoOnly:true})
+
+      user.refreshToken = newRefreshToken
+      await user.save()
+
+      res.status(200).json({
+        messgae:"token refresh successfully",
+        accessToken
+      })
+
+    } catch (error) {
+        return res.status(401).json({
+            message: "Unauthorized, Invalid or expired refresh token",
+        })
+    }
 
 }
