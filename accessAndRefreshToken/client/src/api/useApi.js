@@ -1,28 +1,72 @@
 import axios from "axios";
-import { useContext } from "react";
+import { useContext, useEffect, useRef } from "react";
 import Section from "../context/Context";
 
-export default function useApi(){
+const api = axios.create({
+  baseURL: "/api",
+  withCredentials: true,
+});
 
-   const {accessToken} =  useContext(Section.store)
+export default function useApi() {
+  const { accessToken, setaccessToken } = useContext(Section.store);
+  const accessTokenRef = useRef(accessToken);
 
-   const api = axios.create({
-    baseURL:"http://localhost:5173",
-    withCredentials:true
-})
+  useEffect(() => {
+    accessTokenRef.current = accessToken;
+  }, [accessToken]);
 
-    api.interceptors.request.use((config) =>{
-        config.headers.Authorization = `Bearer ${accessToken}`
+  useEffect(() => {
+    const requestInterceptor = api.interceptors.request.use((config) => {
+      if (accessTokenRef.current) {
+        config.headers.Authorization = `Bearer ${accessTokenRef.current}`;
+      } else {
+        delete config.headers.Authorization;
+      }
 
-        return config
-    })
+      return config;
+    });
 
+    const responseInterceptor = api.interceptors.response.use(
+      (response) => response,
+      async (error) => {
+        const originalRequest = error.config;
 
-    return api
+        if (
+          error.response?.status !== 401 ||
+          !originalRequest ||
+          originalRequest._retry
+        ) {
+          return Promise.reject(error);
+        }
 
+        originalRequest._retry = true;
+
+        try {
+          const response = await axios.post(
+            "/api/auth/refresh",
+            {},
+            { withCredentials: true },
+          );
+          const newAccessToken = response.data.accessToken;
+
+          accessTokenRef.current = newAccessToken;
+          setaccessToken(newAccessToken);
+          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+
+          return api(originalRequest);
+        } catch (refreshError) {
+          accessTokenRef.current = null;
+          setaccessToken(null);
+          return Promise.reject(refreshError);
+        }
+      },
+    );
+
+    return () => {
+      api.interceptors.request.eject(requestInterceptor);
+      api.interceptors.response.eject(responseInterceptor);
+    };
+  }, [setaccessToken]);
+
+  return api;
 }
-
-
-
-
-

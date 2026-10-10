@@ -1,10 +1,48 @@
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import Section from "../context/Context";
+import useApi from "../api/useApi";
+import { useNavigate } from "react-router";
 
 
 const Register = () => {
 
-const data = useContext(Section.store)
+ const navigate = useNavigate()
+
+ const api =  useApi()
+
+  const [formData, setformData] = useState({
+    name:"",
+    email:"",
+    password:""
+  })
+
+const {setuser, setaccessToken} = useContext(Section.store)
+
+const handleChange = (e) =>{
+  const {name,value} = e.target
+  setformData({...formData,[name]:value})
+}
+
+async function Register(e){
+  e.preventDefault()
+    try {
+      const res = await api.post('/auth/register',formData)
+      console.log("reponse",res)
+
+      setformData({
+        name:"",
+        email:"",
+        password:""
+      })
+
+      setuser(res.data.data.user)
+      setaccessToken(res.data.accessToken)
+      navigate("/profile")
+
+    } catch (error) {
+      error("error in regiter",error)
+    }
+}
 
 
 
@@ -26,7 +64,9 @@ const data = useContext(Section.store)
         {/* Register Card */}
         <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-6 shadow-xl">
 
-          <form className="space-y-5">
+          <form
+          onSubmit={Register}
+          className="space-y-5">
 
             {/* Name */}
             <div>
@@ -35,7 +75,9 @@ const data = useContext(Section.store)
               </label>
 
               <input
+              onChange={handleChange}
                 type="text"
+                name="name"
                 placeholder="Enter your name"
                 className="w-full px-4 py-3 rounded-lg
                 bg-zinc-900 border border-zinc-800
@@ -54,6 +96,8 @@ const data = useContext(Section.store)
               </label>
 
               <input
+               onChange={handleChange}
+               name="email"
                 type="email"
                 placeholder="Enter your email"
                 className="w-full px-4 py-3 rounded-lg
@@ -73,7 +117,9 @@ const data = useContext(Section.store)
               </label>
 
               <input
+               onChange={handleChange}
                 type="password"
+                name="password"
                 placeholder="Create a password"
                 className="w-full px-4 py-3 rounded-lg
                 bg-zinc-900 border border-zinc-800

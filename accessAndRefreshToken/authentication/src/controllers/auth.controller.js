@@ -108,7 +108,7 @@ export const refreshController = async (req,res) => {
 
       const {accessToken,refreshToken:newRefreshToken} = genrateToken({userId:user._id})
 
-      res.cookie('refreshToken',newRefreshToken,{httoOnly:true})
+      res.cookie('refreshToken',newRefreshToken,{httpOnly:true})
 
       user.refreshToken = newRefreshToken
       await user.save()

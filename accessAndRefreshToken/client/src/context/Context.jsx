@@ -8,6 +8,8 @@
         const [user, setuser] = useState(null)
         const [accessToken, setaccessToken] = useState(null)
 
+        console.log("accessToken",accessToken)
+
         const contextData = {
             user,
             setuser,
