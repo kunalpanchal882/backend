@@ -2,6 +2,8 @@ import { genrateShortCode } from '../utils/shortUrl.js';
 import urlModel from '../models/url.model.js';
 
 
+
+
 export async function shortUrl(req,res) {
     const {url} = req.body;
 
