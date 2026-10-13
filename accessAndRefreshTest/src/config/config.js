@@ -1,0 +1,12 @@
+import dotenv from 'dotenv'
+dotenv.config()
+
+
+const config = {
+    PORT:process.env.PORT,
+    MONGO_URI:process.env.MONGO_URI,
+    ACCESS_JWT_SECRET:process.env.ACCESS_JWT_SECRET,
+    REFRESH_JWT_SECRET:process.env.REFRESH_JWT_SECRET
+}
+
+export default config
